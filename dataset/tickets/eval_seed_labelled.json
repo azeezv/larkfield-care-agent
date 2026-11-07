@@ -1,0 +1,104 @@
+[
+ {
+  "ticket_id": "T001",
+  "expected_outcome": "PEND",
+  "expected_human_approval_required": true,
+  "expected_approver_role": "SUPPORT_LEAD",
+  "expected_amount_usd": 210.0,
+  "expected_reason_codes": [
+   "DAMAGE_EXCEPTION",
+   "APPROVAL_REQUIRED"
+  ],
+  "note": "Photo-backed faulty/damaged item in the extended window; authority unchanged"
+ },
+ {
+  "ticket_id": "T002",
+  "expected_outcome": "PROCEED",
+  "expected_human_approval_required": false,
+  "expected_approver_role": null
+ },
+ {
+  "ticket_id": "T003",
+  "expected_outcome": "PEND",
+  "expected_human_approval_required": true,
+  "expected_approver_role": "SUPPORT_LEAD"
+ },
+ {
+  "ticket_id": "T004",
+  "expected_outcome": "PROCEED",
+  "expected_human_approval_required": false,
+  "expected_approver_role": null
+ },
+ {
+  "ticket_id": "T005",
+  "expected_outcome": "PROCEED",
+  "expected_human_approval_required": false,
+  "expected_approver_role": null
+ },
+ {
+  "ticket_id": "T006",
+  "expected_outcome": "PROCEED",
+  "expected_human_approval_required": false,
+  "expected_approver_role": null
+ },
+ {
+  "ticket_id": "T008",
+  "expected_outcome": "PROCEED",
+  "expected_human_approval_required": false,
+  "expected_approver_role": null
+ },
+ {
+  "ticket_id": "T011",
+  "expected_outcome": "ESCALATE",
+  "expected_human_approval_required": true,
+  "expected_approver_role": "CARRIER_CLAIMS"
+ },
+ {
+  "ticket_id": "T013",
+  "expected_outcome": "UNABLE_TO_VERIFY",
+  "expected_human_approval_required": false,
+  "expected_approver_role": null
+ },
+ {
+  "ticket_id": "T014",
+  "expected_outcome": "REJECT",
+  "expected_human_approval_required": false,
+  "expected_approver_role": null
+ },
+ {
+  "ticket_id": "T018",
+  "expected_outcome": "REJECT",
+  "expected_human_approval_required": false,
+  "expected_approver_role": null
+ },
+ {
+  "ticket_id": "T019",
+  "expected_outcome": "PROCEED_MODIFIED",
+  "expected_human_approval_required": false,
+  "expected_approver_role": null
+ },
+ {
+  "ticket_id": "T020",
+  "expected_outcome": "ESCALATE",
+  "expected_human_approval_required": true,
+  "expected_approver_role": "TRUST_SAFETY"
+ },
+ {
+  "ticket_id": "T021",
+  "expected_outcome": "ESCALATE",
+  "expected_human_approval_required": true,
+  "expected_approver_role": "TRUST_SAFETY"
+ },
+ {
+  "ticket_id": "T026",
+  "expected_outcome": "PEND",
+  "expected_human_approval_required": true,
+  "expected_approver_role": "SUPPORT_LEAD",
+  "expected_amount_usd": 185.0,
+  "expected_reason_codes": [
+   "ALREADY_REFUNDED",
+   "APPROVAL_REQUIRED"
+  ],
+  "note": "Prior vase credit excluded; one damaged chair of two; proposal awaits approval"
+ }
+]

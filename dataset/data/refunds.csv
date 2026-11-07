@@ -1,0 +1,4 @@
+refund_id,order_id,line_no,amount,status,requested_at,approved_by
+RF-900,LF-100217,1,185.00,ISSUED,2026-10-06T17:00,auto
+RF-901,LF-100224,1,45.00,ISSUED,2026-10-10T16:00,auto
+RF-902,LF-100243,1,45.00,ISSUED,2026-11-01T10:00,auto

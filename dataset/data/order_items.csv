@@ -1,0 +1,58 @@
+order_id,line_no,sku,product_name,qty,unit_price
+LF-100200,1,SKU-MIR-09,Round wall mirror,1,210.00
+LF-100201,1,SKU-LMP-01,Arc floor lamp,1,129.00
+LF-100202,1,SKU-CHR-07,Oak dining chair,1,185.00
+LF-100203,1,SKU-VAS-05,Glass vase,1,45.00
+LF-100204,1,SKU-MUG-12,Stoneware mug set (4),1,38.00
+LF-100205,1,SKU-SHE-06,Floating shelf,1,52.00
+LF-100206,1,SKU-SHE-06,Floating shelf,1,52.00
+LF-100207,1,SKU-VAS-05,Glass vase,1,45.00
+LF-100208,1,SKU-CND-10,Candle trio,1,24.00
+LF-100209,1,SKU-CND-10,Candle trio,1,24.00
+LF-100210,1,SKU-THR-02,Linen throw,1,64.00
+LF-100211,1,SKU-RUG-04,Wool rug 160x230,1,289.00
+LF-100212,1,SKU-BED-11,Percale duvet set,1,159.00
+LF-100213,1,SKU-BED-11,Percale duvet set,1,159.00
+LF-100214,1,SKU-CND-10,Candle trio,1,24.00
+LF-100215,1,SKU-LMP-01,Arc floor lamp,1,129.00
+LF-100216,1,SKU-TBL-08,Side table,1,310.00
+LF-100217,1,SKU-CHR-07,Oak dining chair,1,185.00
+LF-100218,1,SKU-PIL-03,Cushion cover pair,1,27.50
+LF-100218,2,SKU-RUG-04,Wool rug 160x230,1,289.00
+LF-100219,1,SKU-RUG-04,Wool rug 160x230,1,289.00
+LF-100219,2,SKU-LMP-01,Arc floor lamp,1,129.00
+LF-100220,1,SKU-PIL-03,Cushion cover pair,1,27.50
+LF-100220,2,SKU-BED-11,Percale duvet set,1,159.00
+LF-100221,1,SKU-MUG-12,Stoneware mug set (4),1,38.00
+LF-100222,1,SKU-VAS-05,Glass vase,1,45.00
+LF-100224,1,SKU-VAS-05,Glass vase,1,45.00
+LF-100224,2,SKU-CHR-07,Oak dining chair,2,185.00
+LF-100225,1,SKU-THR-02,Linen throw,1,64.00
+LF-100226,1,SKU-RUG-04,Wool rug 160x230,1,289.00
+LF-100227,1,SKU-BED-11,Percale duvet set,1,159.00
+LF-100228,1,SKU-LMP-01,Arc floor lamp,1,129.00
+LF-100228,2,SKU-LMP-01,Arc floor lamp,1,129.00
+LF-100229,1,SKU-CHR-07,Oak dining chair,1,185.00
+LF-100230,1,SKU-VAS-05,Glass vase,1,45.00
+LF-100231,1,SKU-MUG-12,Stoneware mug set (4),1,38.00
+LF-100231,2,SKU-RUG-04,Wool rug 160x230,1,289.00
+LF-100232,1,SKU-MUG-12,Stoneware mug set (4),1,38.00
+LF-100233,1,SKU-SHE-06,Floating shelf,1,52.00
+LF-100234,1,SKU-TBL-08,Side table,1,310.00
+LF-100235,1,SKU-CHR-07,Oak dining chair,1,185.00
+LF-100236,1,SKU-MIR-09,Round wall mirror,1,210.00
+LF-100236,2,SKU-THR-02,Linen throw,1,64.00
+LF-100237,1,SKU-BED-11,Percale duvet set,1,159.00
+LF-100237,2,SKU-THR-02,Linen throw,1,64.00
+LF-100238,1,SKU-TBL-08,Side table,1,310.00
+LF-100239,1,SKU-CHR-07,Oak dining chair,1,185.00
+LF-100240,1,SKU-PIL-03,Cushion cover pair,1,27.50
+LF-100241,1,SKU-LMP-01,Arc floor lamp,1,129.00
+LF-100242,1,SKU-VAS-05,Glass vase,1,45.00
+LF-100242,2,SKU-MIR-09,Round wall mirror,1,210.00
+LF-100243,1,SKU-VAS-05,Glass vase,1,45.00
+LF-100243,2,SKU-CHR-07,Oak dining chair,2,185.00
+LF-100244,1,SKU-LMP-01,Arc floor lamp,1,129.00
+LF-100245,1,SKU-VAS-05,Glass vase,1,45.00
+LF-100246,1,SKU-SHE-06,Floating shelf,1,52.00
+LF-100247,1,SKU-MUG-12,Stoneware mug set (4),1,38.00
