@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "cadra": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Cadra",
+      "options": {
+        "baseURL": "https://proxy.cadra.info/v1",
+        "apiKey": "PASTE_CADRA_TOKEN_HERE"
+      },
+      "models": {
+        "cadra": { "name": "Cadra", "tools": true }
+      }
+    }
+  },
+  "enabled_providers": ["cadra"],
+  "model": "cadra/cadra",
+  "small_model": "cadra/cadra"
+}
