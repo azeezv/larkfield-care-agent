@@ -30,3 +30,21 @@ Run the tests with:
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
+## Run the API
+
+```bash
+LARKFIELD_API_DB=prepared/api.db PORT=8000 .venv/bin/python -m src.api
+```
+
+Runs, decisions and the ledger are stored in the SQLite file named by
+`LARKFIELD_API_DB` (default `prepared/api.db`); LangGraph checkpoints use the
+same file. The port is read from `PORT` (default `8000`).
+
+`GET /runs/{run_id}` and `POST /runs/{run_id}/decision` return the
+`TicketResponse` fields plus:
+
+- `status`: `PENDING`, `APPROVED`, `REJECTED` or `COMPLETE`.
+- `decision`: `approve`, `reject` or null.
+- `approver` and `decided_at`: the human decision details, or null.
+
+`GET /ledger` returns `LedgerEntry` rows for approved actions only.
