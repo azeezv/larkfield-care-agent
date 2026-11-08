@@ -23,6 +23,8 @@
 - `affected_lines[].qty` is clamped to the ordered quantity (2.5), and a ticket
   asking for the whole order carries `requested_all` so 2.4 can reduce it.
 - ORDER_STATUS and OTHER tickets never propose money.
+- Requests outside RP-3.2's refund/return/delivery/order-status scope (for
+  example, a goodwill voucher) get no refund: outcome PROCEED with amount 0.
 
 ## Trade-offs & Limitations
 
