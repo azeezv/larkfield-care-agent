@@ -15,7 +15,7 @@ It stops for a person when policy requires it, and reports what each run costs.
 Models Schema: dataset/schema/response_schema.py
 Follow them exactly; document any added fields in README.md. Read the port from PORT.
 
-Policy authority: dataset/policies/refund_policy_RP-3.2.md \
+Policy authority: dataset/policies/refund_policy_RP-3.2.md 
 Data dictionary: dataset/DATA_DICTIONARY.md. 
 
 ## Rules that must never be broken
@@ -37,7 +37,6 @@ Data dictionary: dataset/DATA_DICTIONARY.md.
 - Code in src/, tests in tests/. Keep requirements.txt minimal.
 - Secrets only in the environment; never commit them.
 - After each change run the tests and fix failures in the same turn.
-- Commit working steps with short, clear messages.
 
 ## Deliverables
 README.md (prepare data, run, configure, added fields), APPROACH.md (max 250
@@ -48,3 +47,6 @@ and two timestamped result files with the change between them.
 ## How to work
 Read files selectively; do not dump large files into context. Make small,
 focused changes. State assumptions explicitly.
+- Keep code compact. No extra features, long docstrings or unrequested files.
+- Don't print whole files or long test output. Show a short summary and any failures.
+- Do only what the prompt asks.
