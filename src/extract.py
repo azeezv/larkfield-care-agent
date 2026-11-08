@@ -69,14 +69,18 @@ class Extracted(BaseModel):
 
 @dataclass
 class ModelReply:
-    data: Extracted
+    data: Any
     model: str
     input_tokens: int
     output_tokens: int
 
 
-def extract(ticket: Any, db_path: Optional[str] = None, call_model=None) -> Dict[str, Any]:
-    """Return the facts dict that policy.decide() takes."""
+def extract(ticket: Any, db_path: Optional[str] = None,
+            call_model=None) -> tuple[Dict[str, Any], ModelReply]:
+    """Return the facts dict that policy.decide() takes, plus the model call.
+
+    The reply carries model id and token counts so the caller can trace cost.
+    """
     reply = (call_model or _gemini)(_prompt(ticket))
     log.info("model_call ticket=%s model=%s input_tokens=%d output_tokens=%d",
              _get(ticket, "ticket_id", "-"), reply.model,
@@ -84,9 +88,9 @@ def extract(ticket: Any, db_path: Optional[str] = None, call_model=None) -> Dict
 
     data = reply.data
     order_id = _order_id(data.order_ref)
-    return {
+    facts = {
         # header and attachments are trusted; the body is not
-        "sender": _sender(ticket),
+        "sender": sender(ticket),
         "order_id": order_id,
         "ticket_type": data.ticket_type,
         "affected_lines": _map_lines(order_id, data.affected_lines, db_path),
@@ -95,9 +99,16 @@ def extract(ticket: Any, db_path: Optional[str] = None, call_model=None) -> Dict
         "received_at": _get(ticket, "received_at"),
         "requested_all": bool(data.requests_whole_order),
     }
+    return facts, reply
 
 
 def _gemini(prompt: str) -> ModelReply:
+    return generate(prompt, Extracted)
+
+
+def generate(prompt: str, response_schema: type[BaseModel],
+             system_instruction: str = SYSTEM_INSTRUCTION) -> ModelReply:
+    """One structured Gemini call; shared by extraction and drafting."""
     from google.genai import types
 
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -108,15 +119,15 @@ def _gemini(prompt: str) -> ModelReply:
         model=model,
         contents=prompt,
         config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION,
+            system_instruction=system_instruction,
             response_mime_type="application/json",
-            response_schema=Extracted,
+            response_schema=response_schema,
             temperature=0,
         ),
     )
     parsed = response.parsed
-    if not isinstance(parsed, Extracted):
-        raise ValueError("model returned no usable extraction")
+    if not isinstance(parsed, response_schema):
+        raise ValueError("model returned no usable structured output")
     usage = response.usage_metadata
     return ModelReply(parsed, response.model_version or model,
                       usage.prompt_token_count or 0, usage.candidates_token_count or 0)
@@ -195,7 +206,7 @@ def _order_id(raw) -> Optional[str]:
     return f"LF-{digits}" if len(digits) == 6 else None
 
 
-def _sender(ticket) -> str:
+def sender(ticket) -> str:
     raw = _get(ticket, "from", None)
     if raw is None:
         raw = _get(ticket, "from_", "")

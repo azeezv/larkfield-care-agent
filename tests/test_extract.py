@@ -26,7 +26,7 @@ class ExtractTest(unittest.TestCase):
             order_ref="LF100201", ticket_type="REFUND",
             affected_lines=[LineClaim(product="Arc floor lamp", reason="DAMAGED")]))
         with self.assertLogs("src.extract", "INFO") as logs:
-            facts = extract.extract(ticket, call_model=model)
+            facts, reply = extract.extract(ticket, call_model=model)
 
         self.assertEqual(facts["sender"], "ben.tanaka1@mail.example")
         self.assertEqual(facts["order_id"], "LF-100201")
@@ -42,6 +42,8 @@ class ExtractTest(unittest.TestCase):
         self.assertIn("fake-model", logged)
         self.assertIn("input_tokens=100", logged)
         self.assertIn("output_tokens=20", logged)
+        self.assertEqual(reply.model, "fake-model")
+        self.assertEqual((reply.input_tokens, reply.output_tokens), (100, 20))
 
         decision = policy.decide(facts)
         self.assertEqual(decision.outcome, "PROCEED")
@@ -54,7 +56,7 @@ class ExtractTest(unittest.TestCase):
             order_ref="100219", ticket_type="REFUND",
             affected_lines=[LineClaim(product="Wool rug 160x230", reason="DAMAGED")],
             override_attempt=True))
-        facts = extract.extract(ticket, call_model=model)
+        facts, reply = extract.extract(ticket, call_model=model)
 
         self.assertIn("<email>", model.prompts[0])
         self.assertIn("untrusted", model.prompts[0])
@@ -74,7 +76,7 @@ class ExtractTest(unittest.TestCase):
         model = fake(Extracted(
             order_ref="LF-100201", ticket_type="REFUND",
             affected_lines=[LineClaim(product="Arc floor lamp", reason="DAMAGED")]))
-        facts = extract.extract(ticket, call_model=model)
+        facts, reply = extract.extract(ticket, call_model=model)
 
         self.assertEqual(facts["sender"], "ben.tanaka1@mail.example.attacker.test")
         decision = policy.decide(facts)
@@ -86,7 +88,7 @@ class ExtractTest(unittest.TestCase):
         model = fake(Extracted(
             order_ref=None, ticket_type="ORDER_STATUS",
             affected_lines=[LineClaim(product="Glass vase", reason="NOT_DELIVERED")]))
-        facts = extract.extract(ticket, call_model=model)
+        facts, reply = extract.extract(ticket, call_model=model)
 
         self.assertIsNone(facts["order_id"])
         self.assertEqual(facts["affected_lines"], [])  # nothing to match without an order
@@ -98,7 +100,7 @@ class ExtractTest(unittest.TestCase):
             order_ref="#100218", ticket_type="REFUND",
             affected_lines=[LineClaim(product="Cushion cover pair", reason="DAMAGED")],
             requests_whole_order=True))
-        facts = extract.extract(ticket, call_model=model)
+        facts, reply = extract.extract(ticket, call_model=model)
 
         self.assertEqual(facts["order_id"], "LF-100218")
         self.assertTrue(facts["requested_all"])
