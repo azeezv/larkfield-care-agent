@@ -5,6 +5,16 @@ A public HTTP service that reads one customer support email and returns the
 desk's decision. It proposes; it never refunds, sends or changes anything.
 It stops for a person when policy requires it, and reports what each run costs.
 
+## Architecture
+Flow: email -> model extracts facts -> rules engine decides -> model drafts reply.
+- Data: cleaned CSVs in SQLite (prepared/larkfield.db) are the source of truth.
+- Model (Gemini, via GEMINI_API_KEY): extracts facts from the email and writes
+  the draft reply. It never decides outcomes, amounts or approvals.
+- Rules engine (plain code, src/policy.py): RP-3.2 as named checks with clause
+  ids. Same facts, same decision. No RAG.
+- Orchestration: LangGraph runs the flow and pauses a run when a person must approve.
+- Never use the Cadra token in the service.
+
 ## API contract
 - GET /health -> {"status": "ok"}
 - POST /tickets -> a run (see schema)
