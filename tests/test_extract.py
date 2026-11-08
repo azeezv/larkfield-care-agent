@@ -19,6 +19,13 @@ def fake(data, model="fake-model", input_tokens=100, output_tokens=20):
     return call
 
 
+def ticket(ticket_id, sender, received_at, subject, body):
+    return {"ticket_id": ticket_id, "received_at": received_at,
+            "channel": "email", "from": sender,
+            "to": "support@larkfield.example", "subject": subject,
+            "body": body, "attachments": []}
+
+
 class ExtractTest(unittest.TestCase):
     def test_normal_email(self):
         ticket = TICKETS["T002"]
@@ -111,6 +118,47 @@ class ExtractTest(unittest.TestCase):
         self.assertEqual(decision.outcome, "PROCEED_MODIFIED")
         self.assertAlmostEqual(decision.amount_usd, 27.50)
         self.assertIn("PARTIAL_LINES", decision.reason_codes)
+
+    def test_worded_product_matches_one_order_line(self):
+        model = fake(Extracted(
+            order_ref="LF-100230", ticket_type="REFUND",
+            affected_lines=[LineClaim(product="tall glass flower vase", reason="DAMAGED")]))
+        facts, _ = extract.extract(
+            ticket("H006", "dev.costa33@mail.example",
+                   "2026-10-20T12:00:00+00:00", "Cracked glass flower vase",
+                   "The tall glass flower vase from order LF-100230 cracked. I paid $80."),
+            call_model=model)
+
+        self.assertEqual(facts["affected_lines"],
+                         [{"line_no": 1, "qty": 1, "reason": "DAMAGED"}])
+        decision = policy.decide(facts)
+        self.assertEqual(decision.outcome, "PROCEED")
+        self.assertAlmostEqual(decision.amount_usd, 45.00)  # order line, not the email's $80
+
+    def test_worded_product_with_no_line_match_is_unable_to_verify(self):
+        model = fake(Extracted(
+            order_ref="LF-100230", ticket_type="REFUND",
+            affected_lines=[LineClaim(product="brass curtain rod", reason="DAMAGED")]))
+        facts, _ = extract.extract(
+            ticket("NO-MATCH", "dev.costa33@mail.example",
+                   "2026-10-20T12:00:00+00:00", "Wrong item", "Wrong item arrived."),
+            call_model=model)
+
+        self.assertEqual(facts["affected_lines"], [])
+        self.assertEqual(policy.decide(facts).outcome, "UNABLE_TO_VERIFY")
+
+    def test_worded_product_with_two_equal_matches_is_unable_to_verify(self):
+        model = fake(Extracted(
+            order_ref="LF-100228", ticket_type="REFUND",
+            affected_lines=[LineClaim(product="tall floor lamp", reason="DAMAGED")]))
+        facts, _ = extract.extract(
+            ticket("AMBIGUOUS", "ben.tanaka31@mail.example",
+                   "2026-11-03T10:00:00+00:00", "Damaged lamp",
+                   "The tall floor lamp arrived damaged."),
+            call_model=model)
+
+        self.assertEqual(facts["affected_lines"], [])
+        self.assertEqual(policy.decide(facts).outcome, "UNABLE_TO_VERIFY")
 
 
 if __name__ == "__main__":

@@ -28,6 +28,10 @@ _client_lock = threading.Lock()
 TicketType = Literal["REFUND", "RETURN", "ORDER_STATUS", "DELIVERY_ISSUE", "OTHER"]
 LineReason = Literal["DAMAGED", "FAULTY", "WRONG", "NOT_AS_DESCRIBED", "NOT_DELIVERED"]
 IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic")
+IGNORE_PRODUCT_WORDS = {
+    "the", "a", "an", "and", "for", "my", "of", "our", "this", "that", "with",
+    "tall", "flower",
+}
 
 SYSTEM_INSTRUCTION = """\
 You extract structured facts from one customer email for the Larkfield Home
@@ -226,6 +230,9 @@ def _map_lines(order_id: Optional[str], claims: List[LineClaim],
             hits = [r for r in rows
                     if probe and (probe in _norm(r["product_name"])
                                   or _norm(r["product_name"]) in probe)]
+        if not hits:
+            hits = [r for r in rows
+                    if _product_words_match(claim.product, r["product_name"])]
         if len(hits) != 1:
             log.warning("line_unmatched order=%s product=%r candidates=%d",
                         order_id, claim.product, len(hits))
@@ -280,3 +287,15 @@ def _get(item: Any, key: str, default=None):
 
 def _norm(value: str) -> str:
     return "".join(ch if ch.isalnum() else " " for ch in str(value).lower()).strip()
+
+
+def _product_words(value: str) -> set[str]:
+    return {word for word in _norm(value).split()
+            if word not in IGNORE_PRODUCT_WORDS}
+
+
+def _product_words_match(claim: str, line: str) -> bool:
+    left, right = _product_words(claim), _product_words(line)
+    if not left or not right:
+        return False
+    return left <= right or right <= left
