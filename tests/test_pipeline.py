@@ -165,6 +165,13 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(response.draft_reply.to, "ben.tanaka1@mail.example")
         self.assertNotIn("$", response.draft_reply.body)
 
+    def test_deepseek_price(self):
+        self.assertEqual(pipeline._price("deepseek-flash"), (0.30, 1.20))
+        self.assertAlmostEqual(pipeline._cost([{
+            "model": "deepseek-flash",
+            "input_tokens": 1_000_000,
+            "output_tokens": 1_000_000}]), 1.50)
+
     def test_bad_draft_retries_then_uses_template(self):
         bad = fake_draft("Hi Ben,\n\nYour refund of $999.00 for order LF-100201 is on "
                          "its way.\n\nLarkfield Home Support")

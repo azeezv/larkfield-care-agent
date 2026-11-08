@@ -33,6 +33,7 @@ PRICE_TABLE = {
     "gemini-2.5-flash": (0.30, 2.50),
     "gemini-2.5-pro": (1.25, 10.00),
     "gemini-2.0-flash": (0.10, 0.40),
+    "deepseek-flash": (0.30, 1.20),
 }
 DEFAULT_PRICE = (0.30, 2.50)
 

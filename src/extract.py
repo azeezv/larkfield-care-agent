@@ -6,6 +6,7 @@ calls in tests: the model call is `_gemini` and can be swapped via `call_model`.
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import sqlite3
@@ -14,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from .policy import DB_PATH
 
@@ -107,8 +108,19 @@ def _gemini(prompt: str) -> ModelReply:
 
 
 def generate(prompt: str, response_schema: type[BaseModel],
-             system_instruction: str = SYSTEM_INSTRUCTION) -> ModelReply:
-    """One structured Gemini call; shared by extraction and drafting."""
+             system_instruction: str = SYSTEM_INSTRUCTION,
+             client=None) -> ModelReply:
+    """One structured call through the selected provider (Gemini by default)."""
+    provider = os.environ.get("PROVIDER", "gemini").strip().lower()
+    if provider == "deepseek":
+        return _deepseek(prompt, response_schema, system_instruction, client)
+    if provider != "gemini":
+        raise RuntimeError(f"unknown PROVIDER {provider!r}; use gemini or deepseek")
+    return _gemini_generate(prompt, response_schema, system_instruction)
+
+
+def _gemini_generate(prompt: str, response_schema: type[BaseModel],
+                     system_instruction: str) -> ModelReply:
     from google.genai import types
 
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -131,6 +143,44 @@ def generate(prompt: str, response_schema: type[BaseModel],
     usage = response.usage_metadata
     return ModelReply(parsed, response.model_version or model,
                       usage.prompt_token_count or 0, usage.candidates_token_count or 0)
+
+
+def _deepseek(prompt: str, response_schema: type[BaseModel],
+              system_instruction: str, client=None) -> ModelReply:
+    api_key = os.environ.get("DEEPSEEK_API_KEY")
+    model = os.environ.get("MODEL_NAME")
+    if not api_key:
+        raise RuntimeError("DEEPSEEK_API_KEY must be set in the environment")
+    if not model:
+        raise ValueError("MODEL_NAME must be set")
+    if client is None:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+
+    schema = json.dumps(response_schema.model_json_schema(), ensure_ascii=False)
+    messages = [
+        {"role": "system", "content": system_instruction +
+         "\nReturn only a JSON object matching this schema:\n" + schema},
+        {"role": "user", "content": prompt},
+    ]
+    for _ in range(2):
+        resp = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            response_format={"type": "json_object"},
+            temperature=0,
+            extra_body={"thinking": {"type": "disabled"}},
+        )
+        try:
+            content = resp.choices[0].message.content or ""
+            parsed = response_schema.model_validate_json(content)
+        except (IndexError, ValidationError, ValueError):
+            continue
+        usage = resp.usage
+        return ModelReply(
+            parsed, resp.model or model, usage.prompt_tokens or 0,
+            usage.completion_tokens or 0)
+    raise ValueError("deepseek returned no usable structured output")
 
 
 def _get_client(api_key: str):

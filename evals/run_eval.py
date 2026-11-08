@@ -21,6 +21,12 @@ RETRIES = int(os.environ.get("EVAL_MAX_RETRIES", "4"))
 RETRY_WAIT = float(os.environ.get("EVAL_RETRY_SECONDS", "20"))
 
 
+def _daily_quota_exhausted(exc: BaseException) -> bool:
+    text = f"{type(exc).__name__}: {exc}".upper()
+    return any(mark in text for mark in (
+        "DAILY QUOTA", "DAILY_LIMIT", "DAILY LIMIT", "PERDAY", "PER DAY"))
+
+
 def _rate_limited(exc: BaseException) -> bool:
     text = f"{type(exc).__name__}: {exc}".upper()
     return any(mark in text for mark in (
@@ -48,6 +54,9 @@ def _run(case: dict) -> dict:
             response = run_ticket(case)
             break
         except Exception as exc:  # noqa: BLE001 - one bad case must not stop the run
+            if _daily_quota_exhausted(exc):
+                raise SystemExit(
+                    f"Daily quota exhausted; stopping evaluation: {exc}") from exc
             error = exc
             if not _rate_limited(exc) or attempt == RETRIES:
                 break
