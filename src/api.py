@@ -77,7 +77,9 @@ def _amount(response) -> float:
     return 0.0
 
 
-def _action(response) -> tuple[str, Optional[float]]:
+def _proposed_action(response) -> Optional[tuple[str, Optional[float]]]:
+    if response.outcome in ("INVALID_REQUEST", "UNABLE_TO_VERIFY"):
+        return None
     if response.outcome == "ESCALATE":
         return "ESCALATION", None
     amount = _amount(response)
@@ -125,14 +127,24 @@ def create_app(*, db_path: Optional[str] = None, extract_call=None,
                 extract_call=app.state.extract_call,
                 draft_call=app.state.draft_call)
             status = "PENDING" if response.human_approval_required else "COMPLETE"
+            created_at = _now()
             try:
                 with closing(_connect(path)) as con:
-                    con.execute(
-                        "INSERT INTO runs (ticket_id, run_id, response_json,"
-                        " status, created_at) VALUES (?, ?, ?, ?, ?)",
-                        (response.ticket_id, response.run_id,
-                         response.model_dump_json(), status, _now()))
-                    con.commit()
+                    with con:
+                        con.execute(
+                            "INSERT INTO runs (ticket_id, run_id, response_json,"
+                            " status, created_at) VALUES (?, ?, ?, ?, ?)",
+                            (response.ticket_id, response.run_id,
+                             response.model_dump_json(), status, created_at))
+                        proposed = _proposed_action(response)
+                        if proposed:
+                            action, amount = proposed
+                            con.execute(
+                                "INSERT INTO ledger (run_id, ticket_id, action,"
+                                " amount_usd, status, recorded_at)"
+                                " VALUES (?, ?, ?, ?, 'PROPOSED', ?)",
+                                (response.run_id, response.ticket_id, action,
+                                 amount, created_at))
             except sqlite3.IntegrityError:
                 with closing(_connect(path)) as con:
                     row = con.execute(
@@ -169,7 +181,7 @@ def create_app(*, db_path: Optional[str] = None, extract_call=None,
                 raise HTTPException(409, "run already decided")
 
             try:
-                response = pipeline.resume_run(
+                pipeline.resume_run(
                     run_id, body.decision, checkpoint_path=path)
             except Exception as exc:  # noqa: BLE001
                 raise HTTPException(
@@ -184,14 +196,12 @@ def create_app(*, db_path: Optional[str] = None, extract_call=None,
                     " decided_at = ? WHERE run_id = ? AND status = 'PENDING'",
                     (status, body.decision, body.approver, decided_at,
                      run_id)).rowcount
-                if updated and body.decision == "approve":
-                    action, amount = _action(response)
+                if updated:
                     con.execute(
-                        "INSERT OR IGNORE INTO ledger (run_id, ticket_id,"
-                        " action, amount_usd, status, recorded_at)"
-                        " VALUES (?, ?, ?, ?, 'APPROVED', ?)",
-                        (run_id, response.ticket_id, action, amount,
-                         decided_at))
+                        "UPDATE ledger SET status = ?"
+                        " WHERE run_id = ? AND status = 'PROPOSED'",
+                        ("APPROVED" if body.decision == "approve"
+                         else "REJECTED", run_id))
                 con.commit()
             with closing(_connect(path)) as con:
                 row = con.execute(

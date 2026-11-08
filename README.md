@@ -134,8 +134,9 @@ An approval is recorded once, however many decisions arrive.
 curl -s http://localhost:8000/ledger
 ```
 
-Returns `LedgerEntry` rows for approved actions only (`REFUND`, `REPLY`,
-`ESCALATION`).
+Returns one `LedgerEntry` per run that proposed an action (`REFUND`, `REPLY`
+or `ESCALATION`), with status `PROPOSED`, `APPROVED` or `REJECTED`. Runs that
+propose nothing have no row.
 
 ## Deploy
 

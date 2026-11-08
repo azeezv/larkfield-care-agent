@@ -17,14 +17,15 @@ TICKETS = {t["ticket_id"]: t for t in json.loads(
     (ROOT / "dataset" / "tickets" / "support_inbox_export.json").read_text())}
 
 
-def fake_extract(order_ref, ticket_type, product):
+def fake_extract(order_ref, ticket_type, product, override=False):
     calls = []
 
     def call(prompt):
         calls.append(prompt)
         data = Extracted(order_ref=order_ref, ticket_type=ticket_type,
                          affected_lines=[LineClaim(product=product,
-                                                   reason="DAMAGED")])
+                                                   reason="DAMAGED")],
+                         override_attempt=override)
         return ModelReply(data, "fake-extract", 100, 20)
     call.calls = calls
     return call
@@ -72,6 +73,7 @@ class ApiTest(unittest.TestCase):
             created = client.post("/tickets", json=TICKETS["T003"])
             run_id = created.json()["run_id"]
             pending = client.get(f"/runs/{run_id}")
+            proposed = client.get("/ledger")
             first = client.post(
                 f"/runs/{run_id}/decision",
                 json={"decision": "approve", "approver": "lead@example.com"})
@@ -81,6 +83,9 @@ class ApiTest(unittest.TestCase):
             ledger = client.get("/ledger")
 
         self.assertEqual(pending.json()["status"], "PENDING")
+        self.assertEqual(len(proposed.json()), 1)
+        self.assertEqual(proposed.json()[0]["status"], "PROPOSED")
+        self.assertEqual(proposed.json()[0]["amount_usd"], 185.0)
         self.assertEqual(first.status_code, 200)
         self.assertEqual(second.status_code, 200)
         self.assertEqual(first.json()["status"], "APPROVED")
@@ -89,6 +94,77 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(ledger.json()[0]["action"], "REFUND")
         self.assertEqual(ledger.json()[0]["amount_usd"], 185.0)
         self.assertEqual(ledger.json()[0]["status"], "APPROVED")
+
+    def test_rejecting_updates_the_same_ledger_row(self):
+        extract = fake_extract("#100202", "REFUND", "Oak dining chair")
+        draft = fake_draft(
+            "Hello,\n\nA refund of $185.00 for order LF-100202 needs approval "
+            "from our Support Lead.\n\nLarkfield Home Support")
+        with self.client(extract, draft) as client:
+            created = client.post("/tickets", json=TICKETS["T003"])
+            run_id = created.json()["run_id"]
+            first = client.post(
+                f"/runs/{run_id}/decision",
+                json={"decision": "reject", "approver": "lead@example.com"})
+            second = client.post(
+                f"/runs/{run_id}/decision",
+                json={"decision": "reject", "approver": "lead@example.com"})
+            conflict = client.post(
+                f"/runs/{run_id}/decision",
+                json={"decision": "approve", "approver": "lead@example.com"})
+            ledger = client.get("/ledger")
+
+        self.assertEqual(first.json()["status"], "REJECTED")
+        self.assertEqual(second.json()["status"], "REJECTED")
+        self.assertEqual(conflict.status_code, 409)
+        self.assertEqual(len(ledger.json()), 1)
+        self.assertEqual(ledger.json()[0]["run_id"], run_id)
+        self.assertEqual(ledger.json()[0]["action"], "REFUND")
+        self.assertEqual(ledger.json()[0]["amount_usd"], 185.0)
+        self.assertEqual(ledger.json()[0]["status"], "REJECTED")
+
+    def test_invalid_request_records_no_ledger_entry(self):
+        extract = fake_extract("LF999999", "REFUND", "Arc floor lamp")
+        with self.client(extract, fake_draft("Hello.")) as client:
+            created = client.post("/tickets", json=TICKETS["T002"])
+            ledger = client.get("/ledger")
+
+        self.assertEqual(created.json()["outcome"], "INVALID_REQUEST")
+        self.assertEqual(ledger.json(), [])
+
+    def test_unable_to_verify_records_no_ledger_entry(self):
+        extract = fake_extract("LF100212", "REFUND", "Arc floor lamp")
+        with self.client(extract, fake_draft("Hello.")) as client:
+            created = client.post("/tickets", json=TICKETS["T013"])
+            ledger = client.get("/ledger")
+
+        self.assertEqual(created.json()["outcome"], "UNABLE_TO_VERIFY")
+        self.assertEqual(ledger.json(), [])
+
+    def test_escalation_records_one_proposed_row_without_amount(self):
+        extract = fake_extract(
+            "100219", "REFUND", "Wool rug", override=True)
+        with self.client(extract, fake_draft("Hello.")) as client:
+            created = client.post("/tickets", json=TICKETS["T020"])
+            ledger = client.get("/ledger")
+
+        self.assertEqual(created.json()["outcome"], "ESCALATE")
+        self.assertEqual(len(ledger.json()), 1)
+        self.assertEqual(ledger.json()[0]["action"], "ESCALATION")
+        self.assertIsNone(ledger.json()[0]["amount_usd"])
+        self.assertEqual(ledger.json()[0]["status"], "PROPOSED")
+
+    def test_order_status_records_one_proposed_reply_without_amount(self):
+        extract = fake_extract("100207", "ORDER_STATUS", "Wall clock")
+        with self.client(extract, fake_draft("Hello.")) as client:
+            created = client.post("/tickets", json=TICKETS["T008"])
+            ledger = client.get("/ledger")
+
+        self.assertEqual(created.json()["outcome"], "PROCEED")
+        self.assertEqual(len(ledger.json()), 1)
+        self.assertEqual(ledger.json()[0]["action"], "REPLY")
+        self.assertIsNone(ledger.json()[0]["amount_usd"])
+        self.assertEqual(ledger.json()[0]["status"], "PROPOSED")
 
     def test_unknown_run_is_404(self):
         extract = fake_extract("LF100201", "REFUND", "Arc floor lamp")
