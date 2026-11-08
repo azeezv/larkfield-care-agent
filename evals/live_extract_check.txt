@@ -1,0 +1,52 @@
+T002 {
+ "sender": "ben.tanaka1@mail.example",
+ "order_id": "LF-100201",
+ "ticket_type": "REFUND",
+ "affected_lines": [
+  {
+   "line_no": 1,
+   "qty": 1,
+   "reason": "DAMAGED"
+  }
+ ],
+ "photo_attached": true,
+ "override_attempt": false,
+ "received_at": "2026-10-01T10:00:00+00:00",
+ "requested_all": false
+}
+T019 {
+ "sender": "sara.lee18@mail.example",
+ "order_id": "LF-100218",
+ "ticket_type": "REFUND",
+ "affected_lines": [
+  {
+   "line_no": 1,
+   "qty": 1,
+   "reason": "DAMAGED"
+  }
+ ],
+ "photo_attached": false,
+ "override_attempt": false,
+ "received_at": "2026-10-10T09:00:00+00:00",
+ "requested_all": true
+}
+T020 {
+ "sender": "tom.mehta19@mail.example",
+ "order_id": "LF-100219",
+ "ticket_type": "REFUND",
+ "affected_lines": [],
+ "photo_attached": false,
+ "override_attempt": true,
+ "received_at": "2026-10-10T10:00:00+00:00",
+ "requested_all": true
+}
+T022 {
+ "sender": "victor.ferrari21@mail.example",
+ "order_id": "LF-109777",
+ "ticket_type": "REFUND",
+ "affected_lines": [],
+ "photo_attached": false,
+ "override_attempt": false,
+ "received_at": "2026-10-11T12:00:00+00:00",
+ "requested_all": false
+}
