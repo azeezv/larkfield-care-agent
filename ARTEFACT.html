@@ -1,13 +1,329 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Artefact</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Artefact</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f5f7f9;
+    --panel: #ffffff;
+    --ink: #1f2933;
+    --muted: #52606d;
+    --line: #d9dee5;
+    --accent: #0b5fa5;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 1.25rem;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  main {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+    background: var(--panel);
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(16, 42, 67, 0.08);
+  }
+
+  h1 {
+    margin: 0 0 1.25rem;
+    color: #102a43;
+    font-size: clamp(1.65rem, 5vw, 2rem);
+    line-height: 1.2;
+  }
+
+  h2 {
+    margin: 2rem 0 0.6rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--line);
+    color: #102a43;
+    font-size: 1.18rem;
+    line-height: 1.3;
+  }
+
+  p { margin: 0.75rem 0; }
+
+  ul {
+    margin: 0.75rem 0;
+    padding-left: 1.3rem;
+  }
+
+  li { margin: 0.45rem 0; }
+
+  a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  a:hover { text-decoration-thickness: 2px; }
+
+  code {
+    padding: 0.1em 0.3em;
+    background: #eef1f5;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+  }
+
+  .table-wrap {
+    margin: 1rem 0 1.25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  th,
+  td {
+    padding: 0.55rem 0.6rem;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+  }
+
+  th {
+    background: #f0f3f7;
+    border-bottom: 2px solid #cbd2d9;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  th:not(:first-child),
+  td:not(:first-child) {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  tbody tr:nth-child(even) { background: #fafbfc; }
+
+  @media (max-width: 680px) {
+    body {
+      padding: 0.75rem;
+      font-size: 16px;
+    }
+
+    main {
+      padding: 1.25rem 1rem;
+      border-radius: 8px;
+    }
+
+    .table-wrap { overflow-x: visible; }
+
+    table,
+    tbody,
+    tr,
+    td {
+      display: block;
+      width: 100%;
+    }
+
+    thead { display: none; }
+
+    tbody tr {
+      margin: 0 0 0.75rem;
+      padding: 0.35rem 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    tbody tr:last-child { margin-bottom: 0; }
+    tbody tr:nth-child(even) { background: #fff; }
+
+    td,
+    td:not(:first-child) {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.3rem 0;
+      border: 0;
+      text-align: right;
+      white-space: normal;
+    }
+
+    td::before {
+      content: attr(data-label);
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-weight: 600;
+      text-align: left;
+    }
+  }
+</style>
 </head>
 <body>
-  <p>
-    Fill this file with the written deliverable your problem brief asks for (for example, a
-    Reconciliation Report). The grader reads this exact file — do not rename or move it.
-  </p>
+<main>
+  <h1>Artefact</h1>
+
+  <h2>Data preparation</h2>
+
+  <p><a href="src/prepare_data.py"><code>src/prepare_data.py</code></a> builds
+  <code>prepared/larkfield.db</code> from <code>dataset/data/</code> using only
+  the standard library, with no LLM calls. It writes to a temporary file and
+  replaces the database only after every integrity check passes, so re-running
+  is safe.</p>
+
+  <ul>
+    <li>Rows kept: 53 customers, 47 orders, 57 order items, 47 shipments and 3
+    refunds. The 49 source orders became 47 after 2 identical duplicate rows were
+    removed (<code>LF-100216</code>, <code>LF-100239</code>).</li>
+    <li>All 53 customer rows were kept (30 names; 23 names have two CRM records),
+    with a trimmed, lowercased <code>email_normalized</code> matching key.</li>
+    <li>47 order totals were parsed to integer cents: 16 <code>$</code>, 15
+    <code>USD</code> and 16 plain amounts.</li>
+    <li>47 order dates were parsed: 13 slash-format and 3 ambiguous. The
+    ambiguous dates were resolved against <code>shipped_at</code>: 1 had only one
+    reading before shipment; 2 used the latest reading before shipment
+    (tie-break).</li>
+    <li>4 shipments whose last carrier scan precedes <code>shipped_at</code> were
+    flagged, with carrier values unchanged.</li>
+    <li>Every change was logged in <code>data_issues</code>; all 15 integrity
+    checks passed.</li>
+  </ul>
+
+  <h2>Policy</h2>
+
+  <p>We used <a href="dataset/policies/refund_policy_RP-3.2.md">RP-3.2</a>
+  (version 3.2, effective 2026-07-01). It states that it replaces RP-3.1 and all
+  earlier customer-care guidance on refunds and returns, so it supersedes the
+  older <a href="dataset/policies/help_centre_faq_v2.md">HC-FAQ v2</a> (published
+  2025-10-14). The FAQ also conflicts with current policy: it says 14 days
+  (RP-3.2: 30, or 45 with a photo), automatic refunds under $250 (RP-3.2: up to
+  $150 without review) and contact us after 5 days without tracking (RP-3.2:
+  more than 10 days without movement is lost in transit).</p>
+
+  <h2>Eval pass rule</h2>
+
+  <p><a href="evals/run_eval.py"><code>evals/run_eval.py</code></a> passes a case
+  only when <code>outcome</code>, <code>human_approval_required</code> and
+  <code>approver_role</code> match exactly, the amount is within $0.005 of the
+  expected value, every expected reason code is present (extra codes are
+  allowed), and the run raised no error.</p>
+
+  <h2>Before and after</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Run</th>
+          <th scope="col">Cases</th>
+          <th scope="col">Passed</th>
+          <th scope="col">Failed</th>
+          <th scope="col">Pass rate</th>
+          <th scope="col">Median cost (USD)</th>
+          <th scope="col">Median latency (s)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="Run">First, 20261108T052037Z</td>
+          <td data-label="Cases">21</td>
+          <td data-label="Passed">21</td>
+          <td data-label="Failed">0</td>
+          <td data-label="Pass rate">1.0</td>
+          <td data-label="Median cost (USD)">0.000464</td>
+          <td data-label="Median latency (s)">2.317</td>
+        </tr>
+        <tr>
+          <td data-label="Run">Before, 20261108T052855Z</td>
+          <td data-label="Cases">28</td>
+          <td data-label="Passed">25</td>
+          <td data-label="Failed">3</td>
+          <td data-label="Pass rate">0.8929</td>
+          <td data-label="Median cost (USD)">0.00048</td>
+          <td data-label="Median latency (s)">2.316</td>
+        </tr>
+        <tr>
+          <td data-label="Run">After, 20261108T053604Z</td>
+          <td data-label="Cases">28</td>
+          <td data-label="Passed">26</td>
+          <td data-label="Failed">2</td>
+          <td data-label="Pass rate">0.9286</td>
+          <td data-label="Median cost (USD)">0.000473</td>
+          <td data-label="Median latency (s)">2.284</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The first run was the 21-case set
+  (<a href="evals/results/20261108T052037Z.json">20261108T052037Z.json</a>). The
+  only change between the before and after runs was matching the customer's
+  wording to an order line by comparing words; an ambiguous or missing match
+  still returns <code>UNABLE_TO_VERIFY</code>.</p>
+
+  <p>The change fixed <code>H006</code> (<code>amount_and_wording</code>), which
+  moved from <code>UNABLE_TO_VERIFY</code> at $0.00 to <code>PROCEED</code> at
+  $45.00. <code>H005</code> still fails on a missing
+  <code>CUSTOMER_MISMATCH</code> reason code, and <code>H007</code> still returns
+  <code>UNABLE_TO_VERIFY</code> where <code>PROCEED</code> is expected.</p>
+
+  <h2>Cost and latency</h2>
+
+  <ul>
+    <li>Cost: each case's <code>trace.cost_usd</code> comes from its token counts
+    times the <code>deepseek-flash</code> price table, and the reported figure is
+    the <code>statistics.median</code> across the run.</li>
+    <li>Latency: each call to <code>run_ticket</code> is timed with
+    <code>time.perf_counter()</code>, and the reported figure is the
+    <code>statistics.median</code> of those per-case times.</li>
+    <li>Medians in the 28-case files: $0.00048 at 2.316 s (before) and $0.000473
+    at 2.284 s (after). Prices are DeepSeek's peak <code>deepseek-flash</code>
+    rates, checked on 8 November 2026, so the real cost is lower off-peak.</li>
+  </ul>
+
+  <h2>What is not built</h2>
+
+  <ul>
+    <li><strong>H005 (two orders):</strong> the outcome is right
+    (<code>INVALID_REQUEST</code>) but the reason code is
+    <code>ORDER_NOT_FOUND</code> instead of <code>CUSTOMER_MISMATCH</code>; the
+    extractor returns no order reference when more than one distinct order number
+    appears.</li>
+    <li><strong>H007 (goodwill voucher):</strong> RP-3.2 does not cover vouchers,
+    and the expected <code>PROCEED</code> result is our own interpretation; the
+    engine returns <code>UNABLE_TO_VERIFY</code>.</li>
+    <li><strong>Render free tier:</strong> the disk is ephemeral and the service
+    sleeps when idle, so runs and the ledger can be lost and the first request
+    after a pause is slow.</li>
+    <li><strong>No RAG:</strong> the policy is small and implemented as code with
+    clause ids, so retrieval is unnecessary.</li>
+    <li><strong>No queue:</strong> model calls run inside the request and
+    approvals wait in SQLite, with no worker queue.</li>
+    <li><strong>No PII redaction</strong> before the model call or in logs, and
+    <strong>no separate injection classifier</strong>; injection detection is a
+    field in the extraction prompt.</li>
+    <li><strong>No email-size limit</strong> and <strong>no attachment-content
+    inspection</strong>; attachments are only checked for an image type or
+    extension.</li>
+    <li><strong>No rate limiting, endpoint authentication, monitoring, or more
+    than one instance.</strong></li>
+    <li><strong>SQLite, not Postgres:</strong> runs, checkpoints and the ledger
+    share SQLite files; production would use Postgres.</li>
+    <li><strong>Small eval:</strong> 28 cases with labels we wrote ourselves.</li>
+  </ul>
+</main>
 </body>
 </html>
