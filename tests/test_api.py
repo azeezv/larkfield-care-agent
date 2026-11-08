@@ -1,8 +1,10 @@
 """HTTP API tests with the fake model: no live calls."""
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -96,6 +98,23 @@ class ApiTest(unittest.TestCase):
                 "/runs/missing/decision",
                 json={"decision": "approve", "approver": "lead@example.com"})
         self.assertEqual(response.status_code, 404)
+
+    def test_health_needs_no_model(self):
+        env = {"PROVIDER": "gemini", "MODEL_NAME": "test",
+               "GEMINI_API_KEY": "test-key"}
+        with patch.dict(os.environ, env, clear=False):
+            with TestClient(create_app(db_path=self.db)) as client:
+                response = client.get("/health")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
+
+    def test_missing_provider_key_fails_at_startup(self):
+        env = {"PROVIDER": "gemini", "MODEL_NAME": "test",
+               "GEMINI_API_KEY": ""}
+        with patch.dict(os.environ, env, clear=False):
+            with self.assertRaisesRegex(RuntimeError, "GEMINI_API_KEY"):
+                with TestClient(create_app(db_path=self.db)):
+                    pass
 
     def test_bad_body_is_422(self):
         with self.client(fake_extract("LF100201", "REFUND", "Arc floor lamp"),

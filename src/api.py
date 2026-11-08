@@ -5,7 +5,7 @@ import json
 import os
 import sqlite3
 import threading
-from contextlib import closing
+from contextlib import asynccontextmanager, closing
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Literal, Optional
@@ -13,7 +13,7 @@ from typing import List, Literal, Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from . import pipeline
+from . import extract, pipeline
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB = ROOT / "prepared" / "api.db"
@@ -88,10 +88,18 @@ def _action(response) -> tuple[str, Optional[float]]:
 
 def create_app(*, db_path: Optional[str] = None, extract_call=None,
                draft_call=None) -> FastAPI:
+    needs_model = extract_call is None and draft_call is None
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        if needs_model:
+            extract.check_config()
+        yield
+
     path = str(Path(db_path or os.environ.get(
         "LARKFIELD_API_DB", DEFAULT_DB)))
     _init_db(path)
-    app = FastAPI(title="Larkfield support desk")
+    app = FastAPI(title="Larkfield support desk", lifespan=lifespan)
     app.state.db_path = path
     app.state.extract_call = extract_call
     app.state.draft_call = draft_call

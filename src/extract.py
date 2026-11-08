@@ -111,6 +111,21 @@ def _gemini(prompt: str) -> ModelReply:
     return generate(prompt, Extracted)
 
 
+def check_config() -> None:
+    """Startup check: the provider and its key must be configured. No network call."""
+    provider = os.environ.get("PROVIDER", "gemini").strip().lower()
+    key_name = {"gemini": "GEMINI_API_KEY",
+                "deepseek": "DEEPSEEK_API_KEY"}.get(provider)
+    if key_name is None:
+        raise RuntimeError(f"unknown PROVIDER {provider!r}; use gemini or deepseek")
+    missing = [name for name in (key_name, "MODEL_NAME")
+               if not os.environ.get(name)]
+    if missing:
+        raise RuntimeError(
+            f"missing required environment variable(s): {', '.join(missing)} "
+            f"for PROVIDER={provider}")
+
+
 def generate(prompt: str, response_schema: type[BaseModel],
              system_instruction: str = SYSTEM_INSTRUCTION,
              client=None) -> ModelReply:

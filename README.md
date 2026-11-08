@@ -48,3 +48,35 @@ same file. The port is read from `PORT` (default `8000`).
 - `approver` and `decided_at`: the human decision details, or null.
 
 `GET /ledger` returns `LedgerEntry` rows for approved actions only.
+
+## Deploy
+
+The image installs `requirements.txt`, builds `prepared/larkfield.db` from
+`dataset/data/` during the build, runs as the non-root user `larkfield`, and
+keeps its SQLite file at `LARKFIELD_API_DB` (image default `/app/data/api.db`).
+
+```bash
+docker build -t larkfield .
+docker run --rm -p 8000:8000 \
+  -e PROVIDER=gemini -e MODEL_NAME=<model> -e GEMINI_API_KEY=<key> larkfield
+```
+
+Render steps:
+
+1. Push the repository and create a **New > Web Service** from it.
+2. Choose the **Docker** runtime (the `Dockerfile` is detected automatically)
+   and set the health check path to `/health`.
+3. Add the environment variables in the Render dashboard, with no secrets
+   committed to the repository:
+   - `PROVIDER`: `gemini` (default) or `deepseek`
+   - `MODEL_NAME`: the provider's model name
+   - `GEMINI_API_KEY` when `PROVIDER=gemini`, or `DEEPSEEK_API_KEY` when
+     `PROVIDER=deepseek`
+   - `PORT` is set by Render; the container listens on `0.0.0.0`
+   - `LARKFIELD_API_DB` only if you mount a persistent disk (point it at a
+     writable path on that disk, e.g. `/app/data/api.db`)
+4. Optional: attach a persistent disk at `/app/data` so runs, decisions and the
+   ledger survive deploys. Without one, the container filesystem is ephemeral.
+
+Startup fails with a clear message if the selected provider's key is missing.
+`GET /health` answers without calling the model.

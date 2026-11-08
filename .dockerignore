@@ -1,0 +1,10 @@
+.env
+opencode.json
+prepared/
+.git
+tests
+evals/results
+.venv
+__pycache__
+*.pyc
+.temp
